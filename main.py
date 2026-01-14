@@ -101,7 +101,7 @@ for id,page_number,bytes in pages:
     print("magick", magick.hex())
 
     nb_color, ptr = read_varint(bytes, ptr)
-    print("nb colors", nb_color)
+    print("nb_colors", nb_color)
 
     brushes = []
 
@@ -118,7 +118,7 @@ for id,page_number,bytes in pages:
             ptr += 22
 
     nb_groups, ptr = read_varint(bytes, ptr)
-    print("nb nb_groups", nb_groups)
+    print("nb_groups", nb_groups)
 
     groups = []
 
@@ -126,10 +126,10 @@ for id,page_number,bytes in pages:
         group, ptr = read_bytes(bytes, ptr, 24)
         groups.append(Group(group))
 
-    np, ptr = read_byte(bytes, ptr)
+    nb_polys, ptr = read_varint(bytes, ptr)
 
-    print("nbpoly", np)
-    for poly in range(np):
+    print("nb_polys", nb_polys)
+    for poly in range(nb_polys):
         ptr, fig = parseFigure(bytes, ptr)
         elements.append(fig.json(brushes,groups, page_number))
 
