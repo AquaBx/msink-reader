@@ -13,10 +13,25 @@ packet
 ```mermaid
 %%{init: { "packet": { "bitsPerRow": 24 } }}%%
 packet
-+24: "Number (Variable Integer)"
++24: "Number (VarInt)"
 ```
 
-## Brush Structure #1
+## Brush Types
+
+| Hex.   | Binary     | Type | Number of bytes | Pressure |
+| ------ | ---------- | ----------- | --- | ----- |
+| `0x00` | `00000000` | Pen         | 46  | True  |
+| `0x18` | `00011000` | Pen         | 46  | False |
+| `0x02` | `00000010` | Pencil      | 46  | True  |
+| `0x1A` | `00011010` | Pencil      | 46  | False |
+| `0x05` | `00000101` | Highlighter | 29  | True  |
+| `0x1D` | `00011101` | Highlighter | 29  | False |
+
+The three least significant bits determine the type of brush used.
+
+The next two bits indicate whether or not the pressure has been activated.
+
+## Brush Structure
 
 ```mermaid
 %%{init: { "packet": { "bitsPerRow": 24 } }}%%
@@ -24,42 +39,18 @@ packet
 title: "Brush"
 ---
 packet
-+1: "1d"
++1: "config"
 +1: "ff"
 +3: "color"
 +4: "width"
 +4: "height"
-+11: "?"
-+5: "?"
-```
-
-## Brush Structure #2
-
-```mermaid
-%%{init: { "packet": { "bitsPerRow": 24 } }}%%
----
-title: "Brush 2"
----
-packet
-+1: "00/18"
-+1: "ff"
-+3: "color"
-+4: "width"
-+4: "height"
-+11: "?"
-
-+2: "803f"
-+2: "0000"
-+2: "0000"
-+2: "0000"
-+2: "0000"
-+2: "0000"
-
-+2: "803f"
-+2: "0000"
-+2: "0000"
-+2: "0000"
-+2: "0000"
++3: "? (if PENCIL)"
++8: "float?"
++8: "float? (if not PENCIL)"
++8: "float? (if not PENCIL)"
++8: "float? (if not PENCIL)"
++8: "float? (if not PENCIL)"
++8: "float? (if not PENCIL)"
 ```
 
 # Groups
@@ -70,7 +61,7 @@ packet
 %%{init: { "packet": { "bitsPerRow": 24 } }}%%
 
 packet
-+24: "Number (Variable Integer)"
++24: "Number (VarInt)"
 ```
 
 ## Group Structure
@@ -94,7 +85,7 @@ packet
 ```mermaid
 %%{init: { "packet": { "bitsPerRow": 24 } }}%%
 packet
-+24: "Number (Variable Integer)"
++24: "Number (VarInt)"
 ```
 
 ## Figure Structure
@@ -102,13 +93,13 @@ packet
 ```mermaid
 %%{init: { "packet": { "bitsPerRow": 24 } }}%%
 packet
-+6: "id? (Variable Integer)"
-+1: "Brush"
-+1: "Group"
++3: "id? (VarInt)"
++3: "Brush (VarInt)"
++3: "Group (VarInt)"
 +1: "?"
-+6: "timestamp? (Variable Integer)"
++3: "timestamp? (VarInt)"
 +9: "?"
-+24: "nb of points (Variable Integer)"
++3: "nb of points (VarInt)"
 ```
 
 ## Point Structure

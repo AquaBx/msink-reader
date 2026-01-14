@@ -30,12 +30,43 @@ def read_varint(data, ptr):
 
     return value, ptr
 
+BRUSH_CONFIG = {
+    # --- PEN ---
+    0x00: {"size": 46, "type": "Pen", "pressure": True},
+    0x18: {"size": 46, "type": "Pen", "pressure": False},
+    
+    # --- PENCIL ---
+    0x02: {"size": 46, "type": "Pencil", "pressure": True},
+    0x1A: {"size": 46, "type": "Pencil", "pressure": False},
+
+    # --- HIGHLIGHTER ---
+    0x05: {"size": 29, "type": "Highlighter", "pressure": True},
+    0x1D: {"size": 29, "type": "Highlighter", "pressure": False},
+}
+
 class Figure:
-    def __init__(self, header1, id,timestamp, header2, points):
+    def __init__(self, id,brush, group, points):
         self.id = id
-        self.brush, self.group, _ = struct.unpack("BBB", header1)
-        # self.x,self.y,ee = struct.unpack("ffB", header2)
+        self.brush = brush
+        self.group = group
         self.points = points
+
+    @staticmethod
+    def parse(data, ptr):
+        id       , ptr = read_varint(data, ptr)
+        brush    , ptr = read_varint(data, ptr)
+        group    , ptr = read_varint(data, ptr)
+        header1  , ptr = read_bytes(data, ptr, 1)
+        timestamp, ptr = read_varint(data, ptr)
+        header2  , ptr = read_bytes(data, ptr, 9)
+        size     , ptr = read_varint(data, ptr)
+
+        pts = []
+        for i in range(size):
+            pt, ptr = Point.parse(data, ptr)
+            pts.append(pt)
+
+        return ptr, Figure(id,brush,group,pts)
 
     def json(self, brushes, groups, page_number):
         pressures = [p.pressure for p in self.points]
@@ -52,36 +83,44 @@ class Figure:
         }
 
 class Brush:
-    def __init__(self, data):
-        size, ptr = read_bytes(data, 0, 1)
-        _, ptr = read_bytes(data, ptr, 1)
-        self.color, ptr = read_bytes(data, ptr, 3)
-        self.width, ptr = read_bytes(data, ptr, 4)
-        self.height, ptr = read_bytes(data, ptr, 4)
+    def __init__(self, type,color,width,height):
+        self.type = type
+        self.color = color
+        self.width = width
+        self.height = height
+
+    @staticmethod
+    def parse(data, ptr):
+        type,ptr = read_byte(data,ptr)
+        _, ptr = read_byte(data, ptr)
+
+        conf = BRUSH_CONFIG[type]
+
+        color, ptr = read_bytes(data, ptr, 3)
+        width, ptr = read_bytes(data, ptr, 4)
+        height, ptr = read_bytes(data, ptr, 4)
+
+        _, ptr = read_bytes(data, ptr, conf["size"] - (4+4+3+1+1))
+
+        return Brush(type,color,width,height), ptr
 
 class Point:
     def __init__(self, data):
         self.x, self.y, self.pressure, *r = struct.unpack("fffffff", data)
 
+    @staticmethod
+    def parse(data, ptr):
+        pt, ptr = read_bytes(data, ptr, 28)
+        return Point(pt), ptr
+
 class Group:
     def __init__(self, data):
         _,self.skew_x,self.skew_y,_,self.offset_x,self.offset_y= struct.unpack("ffffff", data)
-
-def parseFigure(data, ptr):
-    id, ptr = read_varint(data, ptr)
-    header1, ptr = read_bytes(data, ptr, 3)
-    timestamp, ptr = read_varint(data, ptr)
-    header2, ptr = read_bytes(data, ptr, 9)
-    size, ptr = read_varint(data, ptr)
-
-    pts = []
-
-    for i in range(size):
-        pt, ptr = read_bytes(data, ptr, 28)
-        pts.append(Point(pt))
-
-
-    return ptr, Figure(header1, id,timestamp, header2, pts)
+    
+    @staticmethod
+    def parse(data, ptr):
+        gr, ptr = read_bytes(data, ptr, 24)
+        return Group(gr), ptr
 
 file = sys.argv[1]
 con = sqlite3.connect(file)
@@ -97,40 +136,30 @@ for id,page_number,bytes in pages:
     with open("bin.txt", "w") as f:
         f.write(bytes.hex())
 
-    magick, ptr = read_bytes(bytes, 0, 18)
-    print("magick", magick.hex())
+    header, ptr = read_bytes(bytes, 0, 18)
+    print("header", header.hex())
 
     nb_color, ptr = read_varint(bytes, ptr)
     print("nb_colors", nb_color)
 
     brushes = []
-
     for i in range(nb_color):
-        size = int.from_bytes(bytes[ptr : ptr + 1])
-        
-        if size == 0:
-            size = 0x18
-
-        color, ptr = read_bytes(bytes, ptr, size)
-        brushes.append(Brush(color))
-
-        if size == 0x18:
-            ptr += 22
+        brush, ptr = Brush.parse(bytes,ptr) 
+        brushes.append(brush)
 
     nb_groups, ptr = read_varint(bytes, ptr)
     print("nb_groups", nb_groups)
 
     groups = []
-
     for i in range(nb_groups):
-        group, ptr = read_bytes(bytes, ptr, 24)
-        groups.append(Group(group))
+        group, ptr = Group.parse(bytes,ptr) 
+        groups.append(group)
 
     nb_polys, ptr = read_varint(bytes, ptr)
-
     print("nb_polys", nb_polys)
+
     for poly in range(nb_polys):
-        ptr, fig = parseFigure(bytes, ptr)
+        ptr, fig = Figure.parse(bytes, ptr)
         elements.append(fig.json(brushes,groups, page_number))
 
     with open("draw.excalidraw", "w") as f:
