@@ -1,48 +1,123 @@
+# Header
+
 ```mermaid
----
-title: "Number of groups"
----
+%%{init: { "packet": { "bitsPerRow": 24 } }}%%
 packet
-0-31: "Number (Variable Integer)"
++18: "Header"
 ```
+
+# Brushes
+
+## Number of brushes
+
 ```mermaid
----
-title: "Number of brushes"
----
+%%{init: { "packet": { "bitsPerRow": 24 } }}%%
 packet
-0-31: "Number (Variable Integer)"
++24: "Number (Variable Integer)"
 ```
+
+## Brush Structure #1
+
 ```mermaid
+%%{init: { "packet": { "bitsPerRow": 24 } }}%%
 ---
 title: "Brush"
 ---
 packet
-0-1: "1d"
-2-3: "ff"
-4-7: "color"
-8-12: "width"
-13-17: "height"
-18-24: "?"
-25-29: "?"
++1: "1d"
++1: "ff"
++3: "color"
++4: "width"
++4: "height"
++11: "?"
++5: "?"
 ```
+
+## Brush Structure #2
+
 ```mermaid
+%%{init: { "packet": { "bitsPerRow": 24 } }}%%
 ---
 title: "Brush 2"
 ---
 packet
-0-1: "00 or 18"
-2-3: "ff"
-4-7: "color"
-8-12: "width"
-13-17: "height"
-18-24: "?"
-25-39: "803f0000 00000000 00000000"
-40-54: "803f0000 00000000 00000000"
++1: "00/18"
++1: "ff"
++3: "color"
++4: "width"
++4: "height"
++11: "?"
+
++2: "803f"
++2: "0000"
++2: "0000"
++2: "0000"
++2: "0000"
++2: "0000"
+
++2: "803f"
++2: "0000"
++2: "0000"
++2: "0000"
++2: "0000"
 ```
+
+# Groups
+
+## Number of groups
+
 ```mermaid
----
-title: "Number of groups"
----
+%%{init: { "packet": { "bitsPerRow": 24 } }}%%
+
 packet
-0-31: "Number (Variable Integer)"
++24: "Number (Variable Integer)"
+```
+
+## Group Structure
+
+```mermaid
+%%{init: { "packet": { "bitsPerRow": 24 } }}%%
+
+packet
++2: "803f"
++2: "0000"
++2: "0000"
++2: "?"
++2: "offset x"
++2: "offset y"
+```
+
+# Figure
+
+## Number of figures
+
+```mermaid
+%%{init: { "packet": { "bitsPerRow": 24 } }}%%
+packet
++24: "Number (Variable Integer)"
+```
+
+## Figure Structure
+
+```mermaid
+%%{init: { "packet": { "bitsPerRow": 24 } }}%%
+packet
++6: "id? (Variable Integer)"
++1: "Brush"
++1: "Group"
++1: "?"
++6: "timestamp? (Variable Integer)"
++9: "?"
++24: "nb of points (Variable Integer)"
+```
+
+## Point Structure
+
+```mermaid
+%%{init: { "packet": { "bitsPerRow": 24 } }}%%
+packet
++4: "x"
++4: "y"
++4: "pressure"
++16: "?"
 ```
