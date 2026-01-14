@@ -39,7 +39,7 @@ The next two bits indicate whether or not the pressure has been activated.
 title: "Brush"
 ---
 packet
-+1: "config"
++1: "type"
 +1: "ff"
 +3: "color"
 +4: "width"
@@ -97,9 +97,9 @@ packet
 +3: "Brush (VarInt)"
 +3: "Group (VarInt)"
 +1: "?"
-+3: "timestamp? (VarInt)"
++5: "timestamp? (VarInt)"
 +9: "?"
-+3: "nb of points (VarInt)"
++8: "nb of points (VarInt)"
 ```
 
 ## Point Structure
