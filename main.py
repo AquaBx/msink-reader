@@ -70,16 +70,24 @@ class Figure:
 
     def json(self, brushes, groups, page_number):
         pressures = [p.pressure for p in self.points]
-        points = [[p.x, p.y] for p in self.points]
+
+        xs = [ p.x + groups[self.group].offset_x for p in self.points]
+        ys = [ p.y + groups[self.group].offset_y for p in self.points]
+
+        min_x,min_y = min(xs),min(ys)
+
+        points = [[ p.x - min_x, p.y - min_y] for p in self.points]
+
         return {
-            "id":self.id,
-            "type": "draw",
-            "x": groups[self.group].offset_x,
-            "y": groups[self.group].offset_y + page_number * 800,
-            "strokeColor": "#" + brushes[self.brush].color.hex(),
             "points": points,
             "pressures": pressures,
-            "simulatePressure": True,
+            "id": self.id,
+            "type": "freedraw",
+            "x": min_x,
+            "y": min_y + page_number * 800,
+            "strokeColor": "#" + brushes[self.brush].color.hex(),
+            "strokeWidth": 0.125 * brushes[self.brush].width,
+            "simulatePressure": False,
         }
 
 class Brush:
@@ -97,8 +105,8 @@ class Brush:
         conf = BRUSH_CONFIG[type]
 
         color, ptr = read_bytes(data, ptr, 3)
-        width, ptr = read_bytes(data, ptr, 4)
-        height, ptr = read_bytes(data, ptr, 4)
+        wh, ptr = read_bytes(data, ptr, 8)
+        width, height = struct.unpack("ff", wh)
 
         _, ptr = read_bytes(data, ptr, conf["size"] - (4+4+3+1+1))
 
